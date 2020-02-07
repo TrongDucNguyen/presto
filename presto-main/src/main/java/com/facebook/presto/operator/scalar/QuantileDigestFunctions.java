@@ -14,6 +14,7 @@
 package com.facebook.presto.operator.scalar;
 
 import com.facebook.airlift.stats.QuantileDigest;
+import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.block.Block;
 import com.facebook.presto.spi.block.BlockBuilder;
 import com.facebook.presto.spi.function.Description;
@@ -99,6 +100,37 @@ public final class QuantileDigestFunctions
             BIGINT.writeLong(output, digest.getQuantile(DOUBLE.getDouble(percentilesArrayBlock, i)));
         }
         return output.build();
+    }
+
+    @ScalarFunction("scale_qdigest")
+    @Description("Scale a quantile digest according to a new weight")
+    @SqlType("qdigest(double)")
+    public static Slice scaleQuantileDigesDouble(@SqlType("qdigest(double)") Slice input, @SqlType(StandardTypes.DOUBLE) double scale)
+    {
+        return scaleQuantileDiges(input, scale);
+    }
+
+    @ScalarFunction("scale_qdigest")
+    @Description("Scale a quantile digest according to a new weight")
+    @SqlType("qdigest(real)")
+    public static Slice scaleQuantileDigesReal(@SqlType("qdigest(real)") Slice input, @SqlType(StandardTypes.DOUBLE) double scale)
+    {
+        return scaleQuantileDiges(input, scale);
+    }
+
+    @ScalarFunction("scale_qdigest")
+    @Description("Scale a quantile digest according to a new weight")
+    @SqlType("qdigest(bigint)")
+    public static Slice scaleQuantileDigesBigint(@SqlType("qdigest(bigint)") Slice input, @SqlType(StandardTypes.DOUBLE) double scale)
+    {
+        return scaleQuantileDiges(input, scale);
+    }
+
+    private static Slice scaleQuantileDiges(Slice input, double scale)
+    {
+        QuantileDigest digest = new QuantileDigest(input);
+        digest.scale(scale);
+        return digest.serialize();
     }
 
     public static double verifyAccuracy(double accuracy)
